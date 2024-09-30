@@ -1,0 +1,58 @@
+services:
+  mysql_db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: source_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    networks:
+      - mysql_network
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  postgres_db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: target_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    networks:
+      - postgres_network
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  apache_beam:
+    build: .
+    # command: >
+    #   python -m your_apache_beam_script.py
+    volumes:
+      - ./beam_code:/app
+    depends_on:
+      - mysql_db
+      - postgres_db
+    networks:
+      - mysql_network
+      - postgres_network
+    environment:
+      MYSQL_HOST: mysql_db
+      MYSQL_DATABASE: source_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      POSTGRES_HOST: postgres_db
+      POSTGRES_DATABASE: target_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+
+volumes:
+  mysql_data:
+  postgres_data:
+
+networks:
+  mysql_network:
+  postgres_network:
+  
